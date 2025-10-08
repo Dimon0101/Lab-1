@@ -1,13 +1,17 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Xml.Serialization;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Lab_1
 {
     internal class Program
     {
-        class Equipment
-        {
+        class Equipment : IDisposable
+            {
             protected string name;
+            bool dispose = false;
             float maxSpeed;
             protected float MaxSpeed
             {
@@ -53,7 +57,7 @@ namespace Lab_1
                 }
                 set
                 {
-                    if (value < 12.7f && value >= 380)
+                    if (value >= 12.7f && value <= 380)
                     {
                         gun = value;
                     }
@@ -66,7 +70,7 @@ namespace Lab_1
 
             public Equipment()
             {
-
+                Console.WriteLine("Default constructor of Equipment");
             }
             public Equipment(string name, float maxSpeed, float weight, int gun)
             {
@@ -74,6 +78,7 @@ namespace Lab_1
                 MaxSpeed = maxSpeed;
                 Weight = weight;
                 this.gun = gun;
+                Console.WriteLine("Parametric constructor of Equipment");
             }
             public virtual void Move()
             {
@@ -83,13 +88,32 @@ namespace Lab_1
             {
                 Console.WriteLine("Standart shot from equipment");
             }
+            ~Equipment()
+            {
+                Console.WriteLine($"Destructor called for {name}");
+                Dispose(false);
+            }
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+            protected virtual void Dispose(bool disposing)
+            {
+                if (!dispose)
+                {
+                    if (disposing) { }
+                    Console.WriteLine($"Disposed {name}");
+                    dispose = true;
+                }
+            }
         }
         class Tank : Equipment
         {
             protected float armor;
             public Tank()
             {
-
+                Console.WriteLine("Defaul constructor of tank");
             }
             public Tank(string name, float maxSpeed, float weight, int gun, float armor)
             {
@@ -98,6 +122,7 @@ namespace Lab_1
                 Weight = weight;
                 Gun = gun;
                 this.armor = armor;
+                Console.WriteLine("Parametric constructor of tank");
             }
             public override void Shot()
             {
@@ -118,6 +143,7 @@ namespace Lab_1
                 Weight = weight;
                 Gun = gun;
                 this.armor = armor;
+                Console.WriteLine("Private constructor of MBT");
             }
 
             public static MBT CreateMBT(string name, float maxSpeed, float weight, int gun, float armor)
@@ -150,7 +176,7 @@ namespace Lab_1
             protected string addictionWeapon;
             public Aviation()
             {
-
+                Console.WriteLine("Default constructor of aviation");
             }
             public Aviation(string name, float maxSpeed, float weight, int gun, string addictionWepon)
             {
@@ -159,6 +185,7 @@ namespace Lab_1
                 Weight = weight;
                 Gun = gun;
                 this.addictionWeapon = addictionWepon;
+                Console.WriteLine("Parametric constructor of aviation");
             }
             public override void Move()
             {
@@ -178,6 +205,11 @@ namespace Lab_1
                 Weight = weight;
                 Gun = gun;
                 this.addictionWeapon = addictionWepon;
+                Console.WriteLine("Parametric constructor of helicopter");
+            }
+            static Helicopter()
+            {
+                Console.WriteLine("Static constructor of helicopter");
             }
             public override void Move()
             {
@@ -188,10 +220,61 @@ namespace Lab_1
                 Console.WriteLine("Helicopter shot from their guns");
             }
         }
+        static public void CreatePersons(bool isSuppressed, bool isreregistered)
+        {
+            Console.WriteLine("\n----------------------------");
+            Equipment person = new Equipment("Den", 78, 55, 120);
+            Equipment person2 = new Equipment("Don", 78, 55, 120);
+            Tank mage = new Tank("Leopard", 78, 55, 120, 500);
+
+            if (isSuppressed)
+            {
+                Console.WriteLine("\nSuppressed");
+                GC.SuppressFinalize(person);
+                GC.SuppressFinalize(person2);
+            }
+
+            if (isreregistered)
+            {
+                Console.WriteLine("\nReregistered");
+                GC.ReRegisterForFinalize(person);
+                GC.ReRegisterForFinalize(person2);
+            }
+
+            Console.WriteLine("\n----------------------------");
+        }
+
         static void Main(string[] args)
         {
-            MBT Oplot = MBT.CreateMBT("Oplot", 73.2f,51.0f,125,450);
-            MBT Oplot2 = MBT.CreateMBT("Oplot", 73.2f, 51.0f, 125, 450);
+            CreatePersons(false,false);
+            Helicopter helicopter = new Helicopter("Apache", 300, 15, 30, "Missels");
+
+            Console.WriteLine("\nMemory before collecting = " + GC.GetTotalMemory(false));
+            Console.WriteLine("\nOplot's generation before first collecting = " + GC.GetGeneration(helicopter));
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            Console.WriteLine("\nMemory after collecting = " + GC.GetTotalMemory(false));
+            Console.WriteLine("\nOplot's generation after first collecting = " + GC.GetGeneration(helicopter));
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            Console.WriteLine("\nOplot's generation after second collecting = " + GC.GetGeneration(helicopter));
+
+            CreatePersons(true,true);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            CreatePersons(true, true);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            using (Tank tank = new Tank("Abrams", 78,55,120,500))
+            {
+
+            }
         }
     }
 }
