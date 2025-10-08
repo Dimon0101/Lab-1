@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Xml.Serialization;
@@ -74,7 +75,7 @@ namespace Lab_1
             }
             public Equipment(string name, float maxSpeed, float weight, int gun)
             {
-                this.name = name;
+                this.name = "Base veichl";
                 MaxSpeed = maxSpeed;
                 Weight = weight;
                 this.gun = gun;
@@ -102,7 +103,10 @@ namespace Lab_1
             {
                 if (!dispose)
                 {
-                    if (disposing) { }
+                    if (disposing)
+                    {
+                        Console.WriteLine($"Equipment {name} is deliting");
+                    }
                     Console.WriteLine($"Disposed {name}");
                     dispose = true;
                 }
@@ -126,7 +130,7 @@ namespace Lab_1
             }
             public override void Shot()
             {
-                Console.WriteLine("Shot from tank");
+                Console.WriteLine($"Shot from {name}");
             }
             public override void Move()
             {
@@ -223,22 +227,22 @@ namespace Lab_1
         static public void CreatePersons(bool isSuppressed, bool isreregistered)
         {
             Console.WriteLine("\n----------------------------");
-            Equipment person = new Equipment("Den", 78, 55, 120);
-            Equipment person2 = new Equipment("Don", 78, 55, 120);
-            Tank mage = new Tank("Leopard", 78, 55, 120, 500);
+            Equipment TestTank1 = new Equipment("Den", 78, 55, 120);
+            Equipment TestTank2 = new Equipment("Don", 78, 55, 120);
+            Tank Leopard = new Tank("Leopard", 78, 55, 120, 500);
 
             if (isSuppressed)
             {
                 Console.WriteLine("\nSuppressed");
-                GC.SuppressFinalize(person);
-                GC.SuppressFinalize(person2);
+                GC.SuppressFinalize(TestTank1);
+                GC.SuppressFinalize(TestTank2);
             }
 
             if (isreregistered)
             {
                 Console.WriteLine("\nReregistered");
-                GC.ReRegisterForFinalize(person);
-                GC.ReRegisterForFinalize(person2);
+                GC.ReRegisterForFinalize(TestTank1);
+                GC.ReRegisterForFinalize(TestTank2);
             }
 
             Console.WriteLine("\n----------------------------");
@@ -271,6 +275,9 @@ namespace Lab_1
             CreatePersons(true, true);
             GC.Collect();
             GC.WaitForPendingFinalizers();
+
+
+
             using (Tank tank = new Tank("Abrams", 78,55,120,500))
             {
 
