@@ -1,47 +1,70 @@
 ﻿using System;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Xml.Serialization;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Lab_1
 {
     internal class Program
     {
-        class Equipment : IDisposable
-            {
-            protected string name;
+        delegate string Penetration(Equipment WhoShot, Equipment InWhoShot);
+        interface IEquipment
+        {
+            void Move();
+            void Shot();
+        }
+        interface ITransport
+        {
+            void Move();
+        }
+        abstract class Equipment : IDisposable, IEquipment, ITransport
+        {
+            string name;
             bool dispose = false;
             float maxSpeed;
+            float weight;
+            float gun;
+            float armor;
+            float penetration;
+            protected string Name
+            {
+                get { return name; }
+                set
+                {
+                    if (value.Length > 0)
+                    {
+                        name = value;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Wrong name");
+                    }
+                }
+            }
             protected float MaxSpeed
             {
                 get { return maxSpeed; }
                 set
                 {
-                    if (value >= 10)
+                    if (value > 0)
                     {
                         maxSpeed = value;
                     }
                     else
                     {
-                        Console.WriteLine("Wrong value of weight");
+                        Console.WriteLine("Wrong value of MaxSpeed");
                     }
                 }
             }
-            float weight;
             protected float Weight
             {
                 get { return weight; }
                 set
                 {
-                    if(value >= 10 && value <= 200)
+                    if (value >= 10 && value <= 200)
                     {
                         weight = value;
-                    }    
-                    else if( value >= 1000)
+                    }
+                    else if (value >= 1000)
                     {
-                        weight = value/ 1000;
+                        weight = value / 1000;
                     }
                     else
                     {
@@ -49,7 +72,36 @@ namespace Lab_1
                     }
                 }
             }
-            float gun;
+            public float Armor
+            {
+                get { return armor; }
+                set
+                {
+                    if(value >= 0)
+                    {
+                        armor = value;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Wrong value of armor");
+                    }
+                }
+            }
+            public float Penetration
+            {
+                get { return penetration; }
+                set
+                {
+                    if(value >=50 && value <= 1200)
+                    {
+                        penetration = value;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Wrong value of penetration");
+                    }
+                }
+            }
             protected float Gun
             {
                 get
@@ -68,26 +120,40 @@ namespace Lab_1
                     }
                 }
             }
-
             public Equipment()
             {
+                Name = "Default tank";
+                maxSpeed = 30;
+                weight = 10;
+                gun = 12.7f;
                 Console.WriteLine("Default constructor of Equipment");
             }
-            public Equipment(string name, float maxSpeed, float weight, int gun)
+            public Equipment(string name, float maxSpeed, float weight, int gun, float armor, float penetration)
             {
-                this.name = "Base veichl";
+                Name = name;
                 MaxSpeed = maxSpeed;
                 Weight = weight;
-                this.gun = gun;
-                Console.WriteLine("Parametric constructor of Equipment");
+                Gun = gun;
+                Armor = armor;
+                Penetration = penetration;
+                Console.WriteLine($"Created {Name}, {MaxSpeed} , {Weight} , {Gun}");
             }
-            public virtual void Move()
+            public abstract void Move();
+            public abstract void Shot();
+            void ITransport.Move()
             {
-                Console.WriteLine("Standart move of equipment");
+                Console.WriteLine("Logistic move");
             }
-            public virtual void Shot()
+            public static string Penetrate(Equipment WhoShot, Equipment InWhoShot)
             {
-                Console.WriteLine("Standart shot from equipment");
+                if (WhoShot.Penetration > InWhoShot.Armor)
+                {
+                    return "Penetration success";
+                }
+                else
+                {
+                    return "Penetration failed";
+                }
             }
             ~Equipment()
             {
@@ -114,23 +180,18 @@ namespace Lab_1
         }
         class Tank : Equipment
         {
-            protected float armor;
             public Tank()
             {
-                Console.WriteLine("Defaul constructor of tank");
+                Armor = 10;
+                Console.WriteLine($"Defaul constructor of tank{Name}, {MaxSpeed}, {Weight}, {Gun}");
             }
-            public Tank(string name, float maxSpeed, float weight, int gun, float armor)
+            public Tank(string name, float maxSpeed, float weight, int gun, float armor, float penetration) : base(name, maxSpeed, weight, gun,armor, penetration)
             {
-                this.name = name;
-                MaxSpeed = maxSpeed;
-                Weight = weight;
-                Gun = gun;
-                this.armor = armor;
                 Console.WriteLine("Parametric constructor of tank");
             }
             public override void Shot()
             {
-                Console.WriteLine($"Shot from {name}");
+                Console.WriteLine($"Shot from {Name}");
             }
             public override void Move()
             {
@@ -139,30 +200,24 @@ namespace Lab_1
         }
         class  MBT : Tank
         {
-            static int counterOfMBTs = 0;
-            private MBT(string name, float maxSpeed, float weight, int gun, float armor)
+            static MBT alreadyExists;
+            private MBT(string name, float maxSpeed, float weight, int gun, float armor, float penetarion) : base(name, maxSpeed, weight, gun, armor, penetarion)
             {
-                this.name = "Oplot";
-                MaxSpeed = maxSpeed;
-                Weight = weight;
-                Gun = gun;
-                this.armor = armor;
                 Console.WriteLine("Private constructor of MBT");
             }
 
-            public static MBT CreateMBT(string name, float maxSpeed, float weight, int gun, float armor)
+            public static MBT CreateMBT(string name, float maxSpeed, float weight, int gun, float armor, float penetarion)
             {
-                if(counterOfMBTs !=1)
+                if(alreadyExists == null)
                 {
-                    MBT Oplot = new MBT(name,maxSpeed,weight,gun,armor);
-                    Console.WriteLine("Oplot was created");
-                    counterOfMBTs++;
-                    return Oplot;
+                    MBT.alreadyExists = new MBT(name,maxSpeed,weight,gun,armor, penetarion);
+                    Console.WriteLine("Oplot was created"); 
+                    return alreadyExists;
                 }
                 else
                 {
                     Console.WriteLine("Oplot already exists");
-                    return null;
+                    return alreadyExists;
                 }
             }
 
@@ -177,18 +232,12 @@ namespace Lab_1
         }
         class Aviation : Equipment
         {
-            protected string addictionWeapon;
             public Aviation()
             {
                 Console.WriteLine("Default constructor of aviation");
             }
-            public Aviation(string name, float maxSpeed, float weight, int gun, string addictionWepon)
+            public Aviation(string name, float maxSpeed, float weight, int gun, float armor , float penetration) : base(name, maxSpeed, weight, gun, armor, penetration)
             {
-                this.name = name;
-                MaxSpeed = maxSpeed;
-                Weight = weight;
-                Gun = gun;
-                this.addictionWeapon = addictionWepon;
                 Console.WriteLine("Parametric constructor of aviation");
             }
             public override void Move()
@@ -202,13 +251,8 @@ namespace Lab_1
         }
         class  Helicopter : Aviation
         {
-            public Helicopter(string name, float maxSpeed, float weight, int gun, string addictionWepon)
+            public Helicopter(string name, float maxSpeed, float weight, int gun, float armor, float penetration) : base(name, maxSpeed, weight, gun, armor, penetration)
             {
-                this.name = name;
-                MaxSpeed = maxSpeed;
-                Weight = weight;
-                Gun = gun;
-                this.addictionWeapon = addictionWepon;
                 Console.WriteLine("Parametric constructor of helicopter");
             }
             static Helicopter()
@@ -224,64 +268,14 @@ namespace Lab_1
                 Console.WriteLine("Helicopter shot from their guns");
             }
         }
-        static public void CreatePersons(bool isSuppressed, bool isreregistered)
-        {
-            Console.WriteLine("\n----------------------------");
-            Equipment TestTank1 = new Equipment("Den", 78, 55, 120);
-            Equipment TestTank2 = new Equipment("Don", 78, 55, 120);
-            Tank Leopard = new Tank("Leopard", 78, 55, 120, 500);
-
-            if (isSuppressed)
-            {
-                Console.WriteLine("\nSuppressed");
-                GC.SuppressFinalize(TestTank1);
-                GC.SuppressFinalize(TestTank2);
-            }
-
-            if (isreregistered)
-            {
-                Console.WriteLine("\nReregistered");
-                GC.ReRegisterForFinalize(TestTank1);
-                GC.ReRegisterForFinalize(TestTank2);
-            }
-
-            Console.WriteLine("\n----------------------------");
-        }
-
+        
         static void Main(string[] args)
         {
-            CreatePersons(false,false);
-            Helicopter helicopter = new Helicopter("Apache", 300, 15, 30, "Missels");
-
-            Console.WriteLine("\nMemory before collecting = " + GC.GetTotalMemory(false));
-            Console.WriteLine("\nOplot's generation before first collecting = " + GC.GetGeneration(helicopter));
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
-            Console.WriteLine("\nMemory after collecting = " + GC.GetTotalMemory(false));
-            Console.WriteLine("\nOplot's generation after first collecting = " + GC.GetGeneration(helicopter));
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
-            Console.WriteLine("\nOplot's generation after second collecting = " + GC.GetGeneration(helicopter));
-
-            CreatePersons(true,true);
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
-            CreatePersons(true, true);
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-
-
-
-            using (Tank tank = new Tank("Abrams", 78,55,120,500))
-            {
-
-            }
+            Tank t1 = new Tank("Abrams",78,60,120,700,650);
+            MBT Oplot = MBT.CreateMBT("Oplot", 78, 50, 125, 600, 600);
+            Penetration pen = new Penetration(Equipment.Penetrate);
+            Console.WriteLine(pen(t1,Oplot));
+            Console.WriteLine(pen(Oplot,t1));
         }
     }
 }
