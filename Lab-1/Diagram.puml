@@ -1,0 +1,101 @@
+﻿@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+namespace Lab_1 {
+
+    delegate void Penetration(Equipment WhoShot, Equipment InWhoShot)
+
+    interface IEquipment {
+        + void Move()
+        + void Shot(Equipment target)
+    }
+
+    interface ILogistic {
+        + void Move()
+    }
+
+    ' Абстрактный базовый класс
+    abstract class Equipment implements IDisposable, IEquipment, ILogistic {
+        + {event} Penetration OnPenetrationEvent
+        - string name
+        - float maxSpeed
+        - float weight
+        - ...
+        + string Name { get; set; }
+        # float MaxSpeed { get; set; }
+        # float Weight { get; set; }
+        # float Armor { get; set; }
+        # float Penetration { get; set; }
+        + {abstract} void Move()
+        + {abstract} void Shot(Equipment target)
+        + {static} void Penetrate(Equipment WhoShot, Equipment InWhoShot)
+        + int CompareTo(Equipment other)
+        + void Dispose()
+        ' ... и другие члены ...
+    }
+    ' Явная реализация
+    (Equipment, ILogistic) .up. [ILogistic.Move]
+
+    class Tank extends Equipment {
+        + Tank()
+        + {override} void Shot(Equipment target)
+        + {override} void Move()
+    }
+
+    class MBT extends Tank {
+        - {static} MBT alreadyExists
+        - MBT(...)
+        + {static} MBT CreateMBT(...)
+        + {static} void Destroy()
+        + {override} void Move()
+    }
+
+    class Aviation extends Equipment {
+        + Aviation()
+        + {override} void Move()
+        + {override} void Shot(Equipment target)
+    }
+
+    class Helicopter extends Aviation {
+        + Helicopter(...)
+        + {override} void Move()
+    }
+
+    ' Класс-хранилище (агрегация)
+    class Storage implements IComparable, IEnumerable, IEnumerator {
+        - List<Equipment> _equipmentList
+        + Equipment this[string name] { get; }
+        + void Add(Equipment item)
+        + void Sort()
+        + IEnumerator GetEnumerator()
+    }
+
+    ' Статический класс-расширение
+    static class ExtentionEquipment {
+        + {static} void Getinfo(this Equipment target)
+    }
+
+    ' Класс Program (точка входа)
+    internal class Program {
+        {static} void Main(string[] args)
+    }
+}
+
+' --- Определение связей ---
+
+' Агрегация: Storage "содержит" Equipment
+Lab_1.Storage o-- "0..*" Lab_1.Equipment : _equipmentList
+
+' Зависимости (использование)
+Lab_1.Program ..> Lab_1.Equipment
+Lab_1.Program ..> Lab_1.Tank
+Lab_1.Program ..> Lab_1.MBT
+Lab_1.Program ..> Lab_1.Aviation
+Lab_1.Program ..> Lab_1.Storage
+
+' Зависимость метода-расширения
+Lab_1.ExtentionEquipment ..> Lab_1.Equipment : "extends"
+
+@enduml
